@@ -1,14 +1,18 @@
-from dataclasses import asdict
+from datetime import datetime
+from random import randint
 
-from litestar import Controller, delete, get, patch, post, put
+from litestar import Controller, Response, delete, get, patch, post, put
+from litestar.dto import DTOData
 from litestar.exceptions import HTTPException
 
 from app.db import FAKE_DB
-from app.models import User, UserUpdate
+from app.dtos import UserCreateDTO, UserReadDTO, UserUpdateDTO
+from app.models import PasswordUpdate, User
 
 
 class UserController(Controller):
     path = "/usuarios"
+    return_dto = UserReadDTO
 
     @get("/")
     async def list_users(self) -> dict[int, User]:
@@ -24,17 +28,22 @@ class UserController(Controller):
 
         return FAKE_DB[id]
 
-    @post("/")
-    async def create_user(self, data: User) -> User:
-        if data.id in FAKE_DB:
+    @post("/", dto=UserCreateDTO)
+    async def create_user(self, data: DTOData[User]) -> User:
+        usuario = data.create_instance(
+            id=randint(1, 100_000),
+            created_at=datetime.now(),
+        )
+
+        if usuario.id in FAKE_DB:
             raise HTTPException(
-                detail=f"Usuario con id={data.id} ya existe",
+                detail=f"Usuario con id={usuario.id} ya existe",
                 status_code=409,
             )
 
-        FAKE_DB[data.id] = data
+        FAKE_DB[usuario.id] = usuario
 
-        return data
+        return usuario
 
     @put("/{id:int}")
     async def replace_user(self, id: int, data: User) -> User:
@@ -48,10 +57,9 @@ class UserController(Controller):
         FAKE_DB[id] = data
 
         return data
-        
 
-    @patch("/{id:int}")
-    async def update_user(self, id: int, data: UserUpdate) -> User:
+    @patch("/{id:int}", dto=UserUpdateDTO)
+    async def update_user(self, id: int, data: DTOData[User]) -> User:
         if id not in FAKE_DB:
             raise HTTPException(
                 detail="Usuario no encontrado",
@@ -59,11 +67,27 @@ class UserController(Controller):
             )
 
         user = FAKE_DB[id]
-        for k, v in asdict(data).items():
-            if v is not None:
-                setattr(user, k, v)
+        data.update_instance(user)
 
         return user
+
+    @post("/{id:int}/update-password", status_code=204)
+    async def update_password(self, id: int, data: PasswordUpdate) -> None:
+        if id not in FAKE_DB:
+            raise HTTPException(
+                detail="Usuario no encontrado",
+                status_code=404,
+            )
+
+        usuario = FAKE_DB[id]
+
+        if usuario.password != data.current_password:
+            raise HTTPException(
+                detail="Contraseña incorrecta",
+                status_code=401,
+            )
+
+        usuario.password = data.new_password
 
     @delete("/{id:int}")
     async def delete_user(self, id: int) -> None:
