@@ -1,18 +1,20 @@
-from litestar.dto import DataclassDTO, DTOConfig
+from advanced_alchemy.extensions.litestar import SQLAlchemyDTO, SQLAlchemyDTOConfig
 
 from app.models import User
 
 
-class UserReadDTO(DataclassDTO[User]):
-    config = DTOConfig(exclude={"password"})
+class UserReadDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(exclude={"password"})
 
 
-class UserCreateDTO(DataclassDTO[User]):
-    config = DTOConfig(exclude={"id", "created_at"})
+class UserCreateDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(
+        exclude={"id", "created_at", "updated_at"},
+    )
 
 
-class UserUpdateDTO(DataclassDTO[User]):
-    config = DTOConfig(
+class UserUpdateDTO(SQLAlchemyDTO[User]):
+    config = SQLAlchemyDTOConfig(
         exclude={"id", "created_at", "password"},
         partial=True,
     )

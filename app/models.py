@@ -1,14 +1,16 @@
 from dataclasses import dataclass
-from datetime import datetime
+
+from advanced_alchemy.base import BigIntAuditBase
+from sqlalchemy.orm import Mapped, mapped_column
 
 
-@dataclass
-class User:
-    id: int
-    username: str
-    fullname: str
-    password: str
-    created_at: datetime
+class User(BigIntAuditBase):
+    __tablename__ = "users"
+
+    username: Mapped[str] = mapped_column(unique=True)
+    fullname: Mapped[str]
+    password: Mapped[str]
+
 
 @dataclass
 class PasswordUpdate:
