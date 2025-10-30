@@ -5,6 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 
 class User(BigIntAuditBase):
+    """User model with audit fields."""
+
     __tablename__ = "users"
 
     username: Mapped[str] = mapped_column(unique=True)
@@ -14,5 +16,7 @@ class User(BigIntAuditBase):
 
 @dataclass
 class PasswordUpdate:
+    """Password update request."""
+
     current_password: str
     new_password: str

@@ -12,6 +12,7 @@ from app.repositories import UserRepository, provide_user_repo
 
 
 def not_found_error_handler(_: Request[Any, Any, Any], __: NotFoundError) -> Response[Any]:
+    """Handle user not found errors."""
     return Response(
         status_code=404,
         content={"status_code": 404, "detail": "User not found"},
@@ -19,6 +20,7 @@ def not_found_error_handler(_: Request[Any, Any, Any], __: NotFoundError) -> Res
 
 
 def duplicate_error_handler(_: Request[Any, Any, Any], __: DuplicateKeyError) -> Response[Any]:
+    """Handle duplicate user errors."""
     return Response(
         status_code=404,
         content={"status_code": 404, "detail": "User already exists"},
@@ -26,6 +28,8 @@ def duplicate_error_handler(_: Request[Any, Any, Any], __: DuplicateKeyError) ->
 
 
 class UserController(Controller):
+    """Controller for user management operations."""
+
     path = "/usuarios"
     return_dto = UserReadDTO
     dependencies = {"users_repo": Provide(provide_user_repo)}
@@ -36,10 +40,12 @@ class UserController(Controller):
 
     @get("/")
     async def list_users(self, users_repo: UserRepository) -> Sequence[User]:
+        """Get all users."""
         return users_repo.list()
 
     @get("/{id:int}")
     async def get_user(self, id: int, users_repo: UserRepository) -> User:
+        """Get a user by ID."""
         return users_repo.get(id)
 
     @post("/", dto=UserCreateDTO)
@@ -48,6 +54,7 @@ class UserController(Controller):
         data: DTOData[User],
         users_repo: UserRepository,
     ) -> User:
+        """Create a new user."""
         return users_repo.add(data.create_instance())
 
     @patch("/{id:int}", dto=UserUpdateDTO)
@@ -57,6 +64,7 @@ class UserController(Controller):
         data: DTOData[User],
         users_repo: UserRepository,
     ) -> User:
+        """Update a user by ID."""
         user, _ = users_repo.get_and_update(match_fields="id", id=id, **data.as_builtins())
 
         return user
@@ -68,6 +76,7 @@ class UserController(Controller):
         data: PasswordUpdate,
         users_repo: UserRepository,
     ) -> None:
+        """Update a user's password."""
         user = users_repo.get(id)
 
         if user.password != data.current_password:
@@ -81,4 +90,5 @@ class UserController(Controller):
 
     @delete("/{id:int}")
     async def delete_user(self, id: int, users_repo: UserRepository) -> None:
+        """Delete a user by ID."""
         users_repo.delete(id)
