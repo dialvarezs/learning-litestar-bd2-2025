@@ -16,6 +16,8 @@ def not_found_error_handler(_: Request[Any, Any, Any], __: NotFoundError) -> Res
         status_code=404,
         content={"status_code": 404, "detail": "User not found"},
     )
+
+
 def duplicate_error_handler(_: Request[Any, Any, Any], __: DuplicateKeyError) -> Response[Any]:
     return Response(
         status_code=404,
@@ -29,7 +31,7 @@ class UserController(Controller):
     dependencies = {"users_repo": Provide(provide_user_repo)}
     exception_handlers = {
         NotFoundError: not_found_error_handler,
-        DuplicateKeyError: duplicate_error_handler
+        DuplicateKeyError: duplicate_error_handler,
     }
 
     @get("/")
@@ -55,9 +57,7 @@ class UserController(Controller):
         data: DTOData[User],
         users_repo: UserRepository,
     ) -> User:
-        user = users_repo.get(id)
-        data.update_instance(user)
-        users_repo.update(user)
+        user, _ = users_repo.get_and_update(match_fields="id", id=id, **data.as_builtins())
 
         return user
 
